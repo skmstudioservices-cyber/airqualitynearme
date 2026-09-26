@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQI Near Me — Live Air Quality of Indian Cities (PM2.5, PM10)</title>
+<meta name="description" content="Live air quality (AQI) of Delhi, Mumbai, Bengaluru and 12+ Indian cities with PM2.5 and PM10 levels, colour-coded map, and health advice. Check AQI near you now.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://airqualitynearme.pages.dev/">
+<meta name="theme-color" content="#0f172a">
+<meta property="og:title" content="AQI Near Me — Live Air Quality of Indian Cities">
+<meta property="og:description" content="Live AQI, PM2.5 and PM10 for 15 Indian cities on a colour-coded map.">
+<meta property="og:type" content="website">
+<meta name="google-site-verification" content="GlkDu5ZL-CyyKjwPSj9d9X3Y2qsHUj_qAwRwxiLr7nI">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"AQI Near Me","url":"https://airqualitynearme.pages.dev/","inLanguage":"en"}
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#0f172a;color:#f1f5f9;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+h1{font-size:clamp(1.4rem,4.5vw,2rem)}
+.sub{color:#94a3b8;font-size:.95rem;max-width:680px;margin-top:6px}
+.btns{display:flex;gap:10px;margin:16px 0;flex-wrap:wrap}
+button{font:inherit;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;background:#38bdf8;color:#06283a;font-weight:700}
+button.ghost{background:#1e293b;color:#f1f5f9;border:1px solid #475569}
+#map{height:400px;border-radius:14px;border:1px solid #334155}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0;font-size:.8rem}
+.legend span{display:flex;align-items:center;gap:6px}
+.dot{width:14px;height:14px;border-radius:50%;display:inline-block}
+table{width:100%;border-collapse:collapse;margin-top:14px;font-size:.9rem}
+th,td{padding:9px 10px;text-align:left;border-bottom:1px solid #293548}
+th{color:#94a3b8;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-weight:700}
+section{padding:18px 0}
+p,li{color:#cbd5e1;font-size:.9rem}
+ul{margin-left:18px}
+.src{color:#64748b;font-size:.75rem;margin-top:10px}
+.status{margin-top:10px;color:#94a3b8;font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>🌫️ AQI Near Me — Live Air Quality of India</h1>
+  <p class="sub">Live AQI (US EPA scale), PM2.5 and PM10 for 15 major Indian cities on a colour-coded map. Tap a dot or the refresh button for the latest readings.</p>
+  <div class="btns">
+    <button id="refresh">🔄 Refresh live AQI</button>
+    <button id="loc" class="ghost">🎯 AQI at my location</button>
+  </div>
+  <div id="status" class="status">Data source: Open-Meteo air quality (CAMS model). Seed readings captured 26 Sep 2026, 08:45 IST — press Refresh for live values.</div>
+</header>
+
+<div id="map"></div>
+<div class="legend">
+  <span><i class="dot" style="background:#22c55e"></i>Good 0–50</span>
+  <span><i class="dot" style="background:#eab308"></i>Moderate 51–100</span>
+  <span><i class="dot" style="background:#f97316"></i>Unhealthy for sensitive 101–150</span>
+  <span><i class="dot" style="background:#dc2626"></i>Unhealthy 151–200</span>
+  <span><i class="dot" style="background:#a855f7"></i>Very unhealthy 201–300</span>
+  <span><i class="dot" style="background:#7f1d1d"></i>Hazardous 301+</span>
+</div>
+
+<section>
+  <h2 style="font-size:1.1rem">City readings</h2>
+  <table id="tbl">
+    <thead><tr><th>City</th><th>AQI</th><th>Level</th><th>PM2.5</th><th>PM10</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</section>
+
+<section>
+  <h2 style="font-size:1.1rem">What the levels mean for you</h2>
+  <ul>
+    <li><strong>Good (0–50):</strong> Air is clean — outdoor activity fine for everyone.</li>
+    <li><strong>Moderate (51–100):</strong> Unusually sensitive people should watch for symptoms.</li>
+    <li><strong>Unhealthy for sensitive groups (101–150):</strong> Children, older adults, asthma/heart patients — reduce long outdoor exertion. N95 helps.</li>
+    <li><strong>Unhealthy (151–200):</strong> Everyone should limit prolonged outdoor effort; use masks outdoors.</li>
+    <li><strong>Very unhealthy / Hazardous (201+):</strong> Stay indoors, use purifiers/masks, avoid outdoor exercise.</li>
+  </ul>
+</section>
+
+<section>
+  <h2 style="font-size:1.1rem">About this page</h2>
+  <p>Winter smog in Delhi-NCR and North India pushes AQI searches up every November. This page shows live modelled air quality (Open-Meteo, based on the Copernicus CAMS global model) for India's biggest cities — free, no login, no ads cluttering the map. City-level pages and CPCB station-level data are planned next.</p>
+  <p class="src">Data: Open-Meteo Air Quality API (free, no key) · Map: Leaflet + OpenStreetMap contributors (ODbL) · AQI scale: US EPA</p>
+</section>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+var SEED = {"delhi":{"aqi":126,"pm25":55.2,"pm10":136.4,"lat":28.61,"lon":77.23},"mumbai":{"aqi":77,"pm25":16.3,"pm10":23.6,"lat":19.08,"lon":72.88},"bengaluru":{"aqi":35,"pm25":10.7,"pm10":17.1,"lat":12.97,"lon":77.59},"hyderabad":{"aqi":84,"pm25":15.9,"pm10":20.4,"lat":17.39,"lon":78.49},"chennai":{"aqi":63,"pm25":18.5,"pm10":21.9,"lat":13.06,"lon":80.22},"kolkata":{"aqi":52,"pm25":13.1,"pm10":15.4,"lat":22.57,"lon":88.36},"pune":{"aqi":70,"pm25":14.7,"pm10":20.5,"lat":18.52,"lon":73.86},"ahmedabad":{"aqi":61,"pm25":12.9,"pm10":22.9,"lat":23.02,"lon":72.57},"jaipur":{"aqi":55,"pm25":20.1,"pm10":34.6,"lat":26.91,"lon":75.79},"lucknow":{"aqi":38,"pm25":6.0,"pm10":6.0,"lat":26.85,"lon":80.95},"surat":{"aqi":83,"pm25":19.1,"pm10":24.7,"lat":21.17,"lon":72.83},"indore":{"aqi":73,"pm25":18.2,"pm10":40.9,"lat":22.72,"lon":75.86},"chandigarh":{"aqi":null,"pm25":null,"pm10":null,"lat":30.73,"lon":76.78},"bhopal":{"aqi":36,"pm25":9.1,"pm10":11.8,"lat":23.26,"lon":77.41},"nagpur":{"aqi":45,"pm25":17.9,"pm10":20.7,"lat":21.15,"lon":79.09}};
+var NAMES = {"delhi":"Delhi","mumbai":"Mumbai","bengaluru":"Bengaluru","hyderabad":"Hyderabad","chennai":"Chennai","kolkata":"Kolkata","pune":"Pune","ahmedabad":"Ahmedabad","jaipur":"Jaipur","lucknow":"Lucknow","surat":"Surat","indore":"Indore","chandigarh":"Chandigarh","bhopal":"Bhopal","nagpur":"Nagpur"};
+function band(a){if(a==null)return["#64748b","No data"];if(a<=50)return["#22c55e","Good"];if(a<=100)return["#eab308","Moderate"];if(a<=150)return["#f97316","USG"];if(a<=200)return["#dc2626","Unhealthy"];if(a<=300)return["#a855f7","Very unhealthy"];return["#7f1d1d","Hazardous"]}
+function esc(s){var d=document.createElement("div");d.textContent=s;return d.innerHTML}
+var map=L.map("map",{center:[22.8,79],zoom:4});
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:10,attribution:"&copy; OpenStreetMap"}).addTo(map);
+var markers=[];
+function render(data){
+  markers.forEach(function(m){map.removeLayer(m)});markers=[];
+  var tb=document.querySelector("#tbl tbody");tb.innerHTML="";
+  Object.keys(data).forEach(function(k){
+    var c=data[k];if(c.aqi==null){c={aqi:null,pm25:null,pm10:null}}
+    var b=band(c.aqi);
+    if(c.aqi!=null){
+      var m=L.circleMarker([c.lat,c.lon],{radius:8+c.aqi/25,color:b[0],fillColor:b[0],fillOpacity:.75,weight:1})
+        .bindPopup("<strong>"+esc(NAMES[k])+"</strong><br>AQI "+c.aqi+" — "+b[1]+"<br>PM2.5 "+c.pm25+" · PM10 "+c.pm10+" µg/m³").addTo(map);
+      markers.push(m);
+    }
+    var tr=document.createElement("tr");
+    tr.innerHTML="<td>"+esc(NAMES[k])+"</td><td><strong>"+(c.aqi??"—")+"</strong></td><td><span class='badge' style='background:"+b[0]+"33;color:"+b[0]+"'>"+b[1]+"</span></td><td>"+(c.pm25??"—")+"</td><td>"+(c.pm10??"—")+"</td>";
+    tb.appendChild(tr);
+  });
+}
+render(SEED);
+function fetchCity(k,la,lo){
+  return fetch("https://air-quality-api.open-meteo.com/v1/air-quality?latitude="+la+"&longitude="+lo+"&current=us_aqi,pm2_5,pm10").then(function(r){return r.json()});
+}
+document.getElementById("refresh").addEventListener("click",function(){
+  var st=document.getElementById("status");st.textContent="Fetching live AQI…";
+  Promise.all(Object.keys(SEED).map(function(k){return fetchCity(k,SEED[k].lat,SEED[k].lon).then(function(d){SEED[k].aqi=d.current.us_aqi;SEED[k].pm25=d.current.pm2_5;SEED[k].pm10=d.current.pm10}).catch(function(){})}))
+    .then(function(){render(SEED);st.textContent="✅ Live AQI updated "+new Date().toLocaleTimeString("en-IN",{timeZone:"Asia/Kolkata"})+" IST"});
+});
+document.getElementById("loc").addEventListener("click",function(){
+  if(!navigator.geolocation)return;
+  var st=document.getElementById("status");st.textContent="Getting your location…";
+  navigator.geolocation.getCurrentPosition(function(p){
+    var la=p.coords.latitude,lo=p.coords.longitude;
+    fetchCity("me",la,lo).then(function(d){
+      var a=d.current.us_aqi,b=band(a);
+      st.textContent="📍 Your location: AQI "+a+" ("+b[1]+") · PM2.5 "+d.current.pm2_5+" µg/m³ — updated just now";
+      L.circleMarker([la,lo],{radius:12,color:"#38bdf8",fillColor:"#38bdf8",fillOpacity:.9,weight:2}).bindPopup("<strong>Your location</strong><br>AQI "+a+" — "+b[1]).addTo(map).openPopup();
+      map.setView([la,lo],8);
+    });
+  },function(){st.textContent="Could not get location — allow location access and retry."});
+});
+</script>
+</body>
+</html>
